@@ -1,0 +1,47 @@
+ui/node_modules/
+ui/.idea/
+.idea/
+ui/dist/
+marketing-report/ui/node_modules/
+*.iml
+*.classpath
+*.project
+*.settings
+marketing-report/ui/marketing/
+
+# maven ignore
+target/
+*.jar
+*.war
+*.ear
+*.zip
+*.tar
+*.tar.gz
+
+# eclipse ignore
+.settings/
+.project
+.classpath
+
+# idea ignore
+.idea/
+*.ipr
+*.iml
+*.iws
+
+# temp ignore
+*~
+*.log
+*.cache
+*.diff
+*.patch
+*.tmp
+*.java~
+*.properties~
+*.xml~
+*.bak
+
+# system ignore
+.DS_Store
+Thumbs.db
+.metadata
