@@ -18,7 +18,7 @@ object WordCount {
 
 //    textFile.foreach(line => println(line))
 
-    val wordCount = textFile.collect.map(line => println(line))
+    val wordCount = textFile.flatMap(line => line.split(" "))
 //    val counts = wordCount.map(word => (word, 1)).reduceByKey(_ + _)
 //    counts.map(x => x._1 + " " + x._2).saveAsTextFile("/home/hadoop/tao.yang/sparkwordcount.result")
   }

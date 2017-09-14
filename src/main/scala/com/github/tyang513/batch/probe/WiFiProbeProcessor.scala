@@ -8,7 +8,7 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.github.tyang513.batch.probe.common.Line
 import com.github.tyang513.batch.probe.model.WiFiDataEntity
-import com.github.tyang513.batch.probe.util.LineKeyConstants
+import com.github.tyang513.batch.probe.util.{LineKeyConstants, MurmurHash}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
 
@@ -25,21 +25,21 @@ object WiFiProbeProcessor {
 
   def main(args: Array[String]): Unit = {
 
-//    if (args.length <= 0 || args.length != 2) {
-//      logger.info("请输入参数 master filePath")
-//      System.exit(0)
-//    }
+    //    if (args.length <= 0 || args.length != 2) {
+    //      logger.info("请输入参数 master filePath")
+    //      System.exit(0)
+    //    }
 
     val master = "local[*]"
-//      if (args.length == 2) args(0) else {
-//      logger.info("请输入master地址")
-//      null
-//    } // local "spark://ip-172-31-24-33.cn-north-1.compute.internal:7077"
+    //      if (args.length == 2) args(0) else {
+    //      logger.info("请输入master地址")
+    //      null
+    //    } // local "spark://ip-172-31-24-33.cn-north-1.compute.internal:7077"
     val filePath = "/home/hadoop/tao.yang/data.log"
-//    if (args.length == 2) args(1) else {
-//      logger.info("请输入要解析的文件地址")
-//      null
-//    } //
+    //    if (args.length == 2) args(1) else {
+    //      logger.info("请输入要解析的文件地址")
+    //      null
+    //    } //
 
     println("******************************************** init ****************************************")
 
@@ -53,23 +53,21 @@ object WiFiProbeProcessor {
       val mapper = new ObjectMapper() with ScalaObjectMapper
       mapper.registerModule(DefaultScalaModule)
       mapper.configure(Feature.ALLOW_SINGLE_QUOTES, true)
-      try{
+      try {
         mapper.readValue(line.replaceFirst("wifi:", "").replaceFirst("WiFiDataEntity", ""), classOf[WiFiDataEntity])
-      }catch {
+      } catch {
         case e: Exception => //println("parse json exception") do nothing
         case unknown => //println("Unknown exception ") do nothing
       }
     }).filter(_.getClass != classOf[BoxedUnit])
-    emitterJson.collect.map(f => println("emitterJson.collect()" + f.getClass))
-//    val dataArray = emitterJson.map(data => if (data.isInstanceOf[WiFiDataEntity]) WiFiProbeProcessor.parseWifiAnalyticsLog(data.asInstanceOf[WiFiDataEntity]))
-//    println("data array"+ dataArray.getClass + " length = " + dataArray.collect.map(f => println(f.getClass)))
-    //dataArray.map(f => println(f.getClass))
+    //    emitterJson.collect.map(f => println("emitterJson.collect()" + f.getClass)) // com.github.tyang513.batch.probe.model.WiFiDataEntity
+    val dataArray = emitterJson.flatMap(data => WiFiProbeProcessor.parseWifiAnalyticsLog(data.asInstanceOf[WiFiDataEntity])).filter(_.getClass != classOf[BoxedUnit])
+    //    val dataArray = emitterJson.flatMap(data => data.asInstanceOf[WiFiDataEntity].split())
 
-//      .map(l => {
-//      val line = l.asInstanceOf[Line]
-//      val machash = MurmurHash.hash64(line.get(LineKeyConstants.mac) + "")
-//      (machash, line)
-//    }).groupByKey().saveAsTextFile("/home/hadoop/tao.yang/tmp/")
+    dataArray.map(line => {
+      val machash = MurmurHash.hash64(line.get(LineKeyConstants.mac) + "")
+      (machash, line.get(LineKeyConstants.mac))
+    }).groupByKey().saveAsTextFile("/home/hadoop/tao.yang/tmp/")
 
   }
 
@@ -81,24 +79,24 @@ object WiFiProbeProcessor {
     val version = wifiDataEntity.getVersion
     val devtype = wifiDataEntity.getDevtype
     val keytype = wifiDataEntity.getKeytype
-    val tsreceive : java.lang.Long = wifiDataEntity.getTsreceive
+    val tsreceive: java.lang.Long = wifiDataEntity.getTsreceive
     val apmac = paddingMac(wifiData.getApmac)
-    val num : java.lang.Integer = wifiData.getNum
-    val tssend : java.lang.Long = wifiData.getTssend
+    val num: java.lang.Integer = wifiData.getNum
+    val tssend: java.lang.Long = wifiData.getTssend
 
     for (wifiTa <- wifiData.getWifitalist) {
       val line = new Line
       val rssi = wifiTa.getRssi
       val mac = paddingMac(wifiTa.getMac)
       //
-      val dist : java.lang.Integer = wifiTa.getDist
-      val duringstart : java.lang.Long = wifiTa.getDuringstart
-      val duringend : java.lang.Long = wifiTa.getDuringend
-      val packetnumup : Integer = wifiTa.getPacketnumup
-      val packetnumdown : Integer = wifiTa.getPacketnumdown
-      val volumeup : Integer = wifiTa.getVolumeup
-      val volumedown : Integer = wifiTa.getVolumedown
-      val authidtype : Integer = wifiTa.getAuthidtype
+      val dist: java.lang.Integer = wifiTa.getDist
+      val duringstart: java.lang.Long = wifiTa.getDuringstart
+      val duringend: java.lang.Long = wifiTa.getDuringend
+      val packetnumup: Integer = wifiTa.getPacketnumup
+      val packetnumdown: Integer = wifiTa.getPacketnumdown
+      val volumeup: Integer = wifiTa.getVolumeup
+      val volumedown: Integer = wifiTa.getVolumedown
+      val authidtype: Integer = wifiTa.getAuthidtype
       val authid = wifiTa.getAuthid
       val tatype = wifiTa.getTatype
       val tabrand = wifiTa.getTabrand
