@@ -29,7 +29,7 @@ object JsonDemo {
       catch {
         case e: Exception => println("json解析异常")
       }
-    }).filter(f => f == Unit || f.getClass == BoxedUnit.TYPE) //.map(x => println(x.getClass))
+    }).filter(f => f.getClass != classOf[BoxedUnit]) //.map(x => println(x.getClass))
 
     //    val lines = json2object.map(f => if (f.isInstanceOf[WiFiDataEntity]) WiFiProbeProcessor.parseWifiAnalyticsLog(f.asInstanceOf[WiFiDataEntity])).map(l => {
     //      if (l.isInstanceOf[Line]) {
@@ -43,9 +43,9 @@ object JsonDemo {
     //      }
     //    })
 
-    val lineArray = json2object.map(f => WiFiProbeProcessor.parseWifiAnalyticsLog(f.asInstanceOf[WiFiDataEntity]))
+    val lineArray = json2object.map(f => WiFiProbeProcessor.parseWifiAnalyticsLog(f.asInstanceOf[WiFiDataEntity])).toArray.flatten
     println(lineArray.getClass)
-    lineArray.map(i => println(i.getClass))
+//    lineArray.map(i => println(i.getClass))
 
     //    json2object.map(f => if (f.isInstanceOf[WiFiDataEntity]){
     //      val data = f.asInstanceOf[WiFiDataEntity]

@@ -2,7 +2,6 @@ package com.github.tyang513.batch.probe
 
 import java.net.URLEncoder
 
-import com.clearspring.analytics.hash.MurmurHash
 import com.fasterxml.jackson.core.JsonParser.Feature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -15,6 +14,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
+import scala.runtime.BoxedUnit
 
 /**
   * Created by yangtao on 2017/9/13.
@@ -30,7 +30,7 @@ object WiFiProbeProcessor {
 //      System.exit(0)
 //    }
 
-    val master = "local[4]"
+    val master = "local[*]"
 //      if (args.length == 2) args(0) else {
 //      logger.info("请输入master地址")
 //      null
@@ -41,31 +41,39 @@ object WiFiProbeProcessor {
 //      null
 //    } //
 
+    println("******************************************** init ****************************************")
+
     // 初始化spark context
-    val sparkConfig = new SparkConf().setAppName("WiFi-Probe-Processor").setMaster(master)
+    val sparkConfig = new SparkConf().setAppName("WiFi-Probe-Processor").setMaster("spark://ip-172-31-24-33.cn-north-1.compute.internal:7077")
     val sparkContext = new SparkContext(sparkConfig)
 
     // read file
     val probeLogFile = sparkContext.textFile(filePath)
-
     val emitterJson = probeLogFile.map(line => {
       val mapper = new ObjectMapper() with ScalaObjectMapper
       mapper.registerModule(DefaultScalaModule)
       mapper.configure(Feature.ALLOW_SINGLE_QUOTES, true)
-      try
-        mapper.readValue(line, classOf[WiFiDataEntity])
-      catch {
-        case e: Exception => logger.error(line, e)
+      try{
+        mapper.readValue(line.replaceFirst("wifi:", "").replaceFirst("WiFiDataEntity", ""), classOf[WiFiDataEntity])
+      }catch {
+        case e: Exception => //println("parse json exception") do nothing
+        case unknown => //println("Unknown exception ") do nothing
       }
-    }).map(data => if (data.isInstanceOf[WiFiDataEntity]) WiFiProbeProcessor.parseWifiAnalyticsLog(data.asInstanceOf[WiFiDataEntity])).map(l => {
-      val line = l.asInstanceOf[Line]
-      val machash = MurmurHash.hash64(line.get(LineKeyConstants.mac) + "")
-      (machash, line)
-    }).groupByKey().saveAsTextFile("/home/hadoop/tao.yang/tmp/")
+    }).filter(_.getClass != classOf[BoxedUnit])
+    emitterJson.collect.map(f => println("emitterJson.collect()" + f.getClass))
+//    val dataArray = emitterJson.map(data => if (data.isInstanceOf[WiFiDataEntity]) WiFiProbeProcessor.parseWifiAnalyticsLog(data.asInstanceOf[WiFiDataEntity]))
+//    println("data array"+ dataArray.getClass + " length = " + dataArray.collect.map(f => println(f.getClass)))
+    //dataArray.map(f => println(f.getClass))
+
+//      .map(l => {
+//      val line = l.asInstanceOf[Line]
+//      val machash = MurmurHash.hash64(line.get(LineKeyConstants.mac) + "")
+//      (machash, line)
+//    }).groupByKey().saveAsTextFile("/home/hadoop/tao.yang/tmp/")
 
   }
 
-  def parseWifiAnalyticsLog(wifiDataEntity: WiFiDataEntity): List[Line] = {
+  def parseWifiAnalyticsLog(wifiDataEntity: WiFiDataEntity): ArrayBuffer[Line] = {
     val returnList = ArrayBuffer.empty[Line]
     val wifiData = wifiDataEntity.getWifidata
 
@@ -131,7 +139,7 @@ object WiFiProbeProcessor {
       line.put(LineKeyConstants.taevent, taEventJsonString)
       returnList.add(line)
     }
-    returnList.toList
+    returnList
   }
 
   def paddingMac(mac: String): String = {
