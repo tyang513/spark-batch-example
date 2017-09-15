@@ -66,9 +66,8 @@ object WiFiProbeProcessor {
 
     dataArray.map(line => {
       val machash = MurmurHash.hash64(line.get(LineKeyConstants.mac) + "")
-      (machash, line.get(LineKeyConstants.mac))
+      (machash, line)
     }).groupByKey().saveAsTextFile("/home/hadoop/tao.yang/tmp/")
-
   }
 
   def parseWifiAnalyticsLog(wifiDataEntity: WiFiDataEntity): ArrayBuffer[Line] = {
