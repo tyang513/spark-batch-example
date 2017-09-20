@@ -21,7 +21,7 @@ public class ApplicaitonContextManager {
     private ApplicaitonContextManager() {
         synchronized (lock) {
             if (applicationContext == null) {
-                applicationContext = new ClassPathXmlApplicationContext("classpath:marketing-spring-beans.xml");
+                applicationContext = new ClassPathXmlApplicationContext("classpath:spark-batch-example-spring-beans.xml");
             }
         }
     }
@@ -32,7 +32,7 @@ public class ApplicaitonContextManager {
 
     public synchronized ApplicationContext getApplicationContext() {
         if (applicationContext == null) {
-            applicationContext = new ClassPathXmlApplicationContext("classpath:marketing-spring-beans.xml");
+            applicationContext = new ClassPathXmlApplicationContext("classpath:spark-batch-example-spring-beans.xml");
         }
         return applicationContext;
     }
@@ -42,7 +42,7 @@ public class ApplicaitonContextManager {
     }
 
     public static void main(String[] args) {
-        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:marketing-spring-beans.xml");
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spark-batch-example-spring-beans.xml");
 
         JdbcTemplate jdbcTemplate = applicationContext.getBean(JdbcTemplate.class);
         PipelineDefinition pipelineDefinition = jdbcTemplate.queryForObject("select * from TD_MKT_PIPELINE_DEFINITION " +

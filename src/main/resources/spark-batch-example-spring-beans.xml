@@ -19,7 +19,7 @@
 		<property name="ignoreResourceNotFound" value="true" />
 		<property name="locations">
 			<list>
-				<value>classpath:marketing.properties</value>
+				<value>classpath:spark-batch-example.properties</value>
 				<value>file:///nfs/config/wifianalytics/marketing.properties</value>
 			</list>
 		</property>
