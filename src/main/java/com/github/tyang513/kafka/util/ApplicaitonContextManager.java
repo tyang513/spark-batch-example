@@ -41,6 +41,14 @@ public class ApplicaitonContextManager {
         return getApplicationContext().getBean(requiredType);
     }
 
+    public Object getBean(String name) throws BeansException {
+        return getApplicationContext().getBean(name);
+    }
+
+    public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
+        return getApplicationContext().getBean(name, requiredType);
+    }
+
     public static void main(String[] args) {
         ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spark-batch-example-spring-beans.xml");
 
