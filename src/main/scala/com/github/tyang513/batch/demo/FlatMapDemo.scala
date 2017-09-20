@@ -11,7 +11,9 @@ object FlatMapDemo {
     val a = Array(a1, a2)
     a.foreach(println)
     a.flatMap(x => x).foreach(println)
-
+    val m1 = Map(
+      "a" -> "b"
+    )
   }
 
 }

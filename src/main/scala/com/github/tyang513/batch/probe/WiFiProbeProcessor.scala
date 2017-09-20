@@ -9,6 +9,7 @@ import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.github.tyang513.batch.probe.common.Line
 import com.github.tyang513.batch.probe.model.WiFiDataEntity
 import com.github.tyang513.batch.probe.util.{LineKeyConstants, MurmurHash}
+import kafka.utils.ZkUtils
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
 
@@ -24,7 +25,6 @@ object WiFiProbeProcessor {
   val logger = LoggerFactory.getLogger(WiFiProbeProcessor.getClass)
 
   def main(args: Array[String]): Unit = {
-
     //    if (args.length <= 0 || args.length != 2) {
     //      logger.info("请输入参数 master filePath")
     //      System.exit(0)
