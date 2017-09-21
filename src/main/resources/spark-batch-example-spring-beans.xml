@@ -49,19 +49,4 @@
     <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
         <property name="dataSource" ref="dataSource"></property>
     </bean>
-
-    <!--
-    <bean id="dbCache" class="td.enterprise.wanalytics.processor.cache.impl.DBEhcache">
-    </bean>
-
-    <bean id="dao" class="td.etl.plugin.changer.atomic.impl.CacheDaoImpl">
-        <property name="dbCache" ref="dbCache"></property>
-        <property name="jdbcTemplate" ref="jdbcTemplate"></property>
-    </bean>
-
-    <bean id="dictDao" class="td.etl.plugin.changer.atomic.impl.CacheDaoImpl">
-        <property name="dbCache" ref="dbCache"></property>
-        <property name="jdbcTemplate" ref="jdbcTemplate"></property>
-    </bean>
-    -->
 </beans>

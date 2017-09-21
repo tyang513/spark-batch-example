@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ehcache name="ehcache" updateCheck="false">
+
+	<cache name="PipelineDefinitionCache" maxElementsInMemory="50000" eternal="false" memoryStoreEvictionPolicy="LRU"
+		timeToIdleSeconds="3600" timeToLiveSeconds="50400" overflowToDisk="false">
+	</cache>
+
+</ehcache>
