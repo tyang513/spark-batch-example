@@ -8,7 +8,6 @@ import kafka.serializer.StringDecoder
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.kafka.{HasOffsetRanges, KafkaUtils, OffsetRange}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
-import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer
 
 /**
   * Created by yangtao on 2017/9/12.
@@ -19,12 +18,14 @@ object WordCountStreaming {
 
     val streamingProperties : Properties  = ApplicaitonContextManager.getInstance().getBean("spark-batch-example-streaming", classOf[java.util.Properties])
 
-    val topic = "test".split(",").toSet
-    val kafkaParam = Map[String, String](
-      "metadata.broker.list" -> streamingProperties.getProperty("marketing.streaming.kafka.brokers")
-    )
+    val topic = streamingProperties.getProperty("marketing.streaming.kafka.topic", "test").split(",").toSet
 
-    println("=============================== start ")
+    val kafkaParam = Map[String, String](
+      "metadata.broker.list" -> streamingProperties.getProperty("marketing.streaming.kafka.brokers"),
+      "request.required.acks" -> streamingProperties.getProperty("request.required.acks", "1"),
+      "auto.offset.reset" -> "latest",
+      "enable.auto.commit" -> "false"
+    )
 
     val sparkConfig = new SparkConf().setAppName("word-count-streaming").setMaster("spark://172.23.7.126:7077")
     val streamingContext = new StreamingContext(sparkConfig, Seconds(10))
