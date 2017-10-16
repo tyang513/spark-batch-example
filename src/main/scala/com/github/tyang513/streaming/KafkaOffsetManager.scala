@@ -34,6 +34,7 @@ object KafkaOffsetManager {
         try {
           val offsetStatTuple = ZkUtils.readData(zkClient, offsetPath)
           if (offsetStatTuple != null) {
+            println("offset path : " + offsetPath + " partition = " + partition + " " + " offsetStatTuple = " + offsetStatTuple)
             //LOGGER.info("retrieving offset details - topic: {}, partition: {}, offset: {}, node path: {}", Seq[AnyRef](topicPartitions._1, partition.toString, offsetStatTuple._1, offsetPath): _*)
             topicPartOffsetMap.put(new TopicAndPartition(topicPartitions._1, Integer.valueOf(partition)), offsetStatTuple._1.toLong)
           }
@@ -44,7 +45,6 @@ object KafkaOffsetManager {
         }
       })
     })
-
     topicPartOffsetMap.toMap
   }
 
@@ -62,43 +62,43 @@ object KafkaOffsetManager {
       val offsetPath = zkGroupTopicDirs.consumerOffsetDir + "/" + or.partition;
       val offsetVal = if (storeEndOffset) or.untilOffset else or.fromOffset
       val data = offsetVal.toString
-      ZkUtils.updatePersistentPath(zkClient, offsetPath, offsetVal + data)
+      println("offset path = " + offsetPath + " offset value = " + offsetVal + "  data = " + data)
+      ZkUtils.updatePersistentPath(zkClient, offsetPath, offsetVal.toString)
 
       //LOGGER.debug("persisting offset details - topic: {}, partition: {}, offset: {}, node path: {}", Seq[AnyRef](or.topic, or.partition.toString, offsetVal.toString, offsetPath): _*)
     })
   }
 
   def main(args: Array[String]) {
-    val sparkConf = new SparkConf().setAppName("Kafka-Offset-Management-Blog")
-      .setMaster("local[4]") //Uncomment this line to test while developing on a workstation
-    val sc = new SparkContext(sparkConf)
-    val ssc = new StreamingContext(sc, Seconds(10))
+    val sparkConf = new SparkConf().setAppName("KafkaOffsetManager").setMaster("spark://172.23.7.126:7077")
+      .set("spark.streaming.backpressure.enabled", "true")
+      .set("spark.streaming.kafka.maxRatePerPartition", "300")
+    val sparkConfig = new SparkContext(sparkConf)
+    val streamingContext = new StreamingContext(sparkConfig, Seconds(3))
 
     val kafkaParams = Map[String, String](
-      "bootstrap.servers" -> "localhost:9092,anotherhost:9092",
-      "key.deserializer" -> "",
-      "value.deserializer" -> "",
+      "metadata.broker.list" -> "172.23.7.125:9092",
+      "request.required.acks" -> "1",
       "group.id" -> "use_a_separate_group_id_for_each_stream",
-      "auto.offset.reset" -> "latest",
       "enable.auto.commit" -> "false"
     )
-    val topics = Seq("topicA", "topicB")
-    val zkUrl = args(0)
-    val sessionTimeout = args(1).toInt
-    val connectionTimeout = args(2).toInt
+    val topics = Seq("test")
 
-    val zkConnect = ""
+    val zkConnect = "172.23.7.125:2181"
     val zkSessionTimeoutMs = 6000
     val zkConnectionTimeoutMs = 30
     val zkClient = new ZkClient(zkConnect, zkSessionTimeoutMs, zkConnectionTimeoutMs, ZKStringSerializer)
     val offset = readOffsets(topics, kafkaParams.apply("group.id").toString, zkClient)
     val messageHandler = (mmd: MessageAndMetadata[String, String]) => (mmd.key(), mmd.message())
-    val inputDStream = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder, (String, String)](ssc, kafkaParams, offset, messageHandler)
+    val inputDStream = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder, (String, String)](streamingContext, kafkaParams, offset, messageHandler)
 
     inputDStream.foreachRDD((rdd, batchTime) => {
       val offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
-      offsetRanges.foreach(offset => println(offset.topic, offset.partition, offset.fromOffset, offset.untilOffset))
+      offsetRanges.foreach(offset => println("topic = " + offset.topic, " partition = " + offset.partition, " from offset = " + offset.fromOffset + "until offset = " + offset.untilOffset, " read length = " + (offset.untilOffset - offset.fromOffset)))
       persistOffsets(offsetRanges.toSeq, kafkaParams.apply("group.id").toString, true, zkClient)
     })
+
+    streamingContext.start()
+    streamingContext.awaitTermination()
   }
 }
